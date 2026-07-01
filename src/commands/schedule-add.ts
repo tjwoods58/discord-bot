@@ -21,7 +21,7 @@ export const scheduleCommand: Command = {
             .setName("week")
             .setDescription("Week number")
             .setRequired(true)
-            .setMinValue(1),
+            .setMinValue(0),
         )
         .addStringOption((option) =>
           option

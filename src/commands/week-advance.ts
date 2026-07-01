@@ -48,7 +48,7 @@ export const weekCommand: Command = {
             .setName("week")
             .setDescription("Week number")
             .setRequired(true)
-            .setMinValue(1),
+            .setMinValue(0),
         ),
     ),
 
