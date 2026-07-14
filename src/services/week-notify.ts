@@ -15,24 +15,24 @@ import {
 } from "../utils/deadlines.js";
 import { buildWeekScheduleEmbed } from "../utils/format.js";
 
-export interface AdvanceWeekResult {
-  newWeek: number;
+export interface NotifyWeekResult {
+  week: number;
   matchupCount: number;
   notifiedCount: number;
   byeCount: number;
   dmFailures: string[];
 }
 
-export async function advanceWeekAndNotify(
+async function notifyWeekAndUpdate(
   client: Client,
   scheduleChannelId: string,
-): Promise<AdvanceWeekResult> {
-  const newWeek = getCurrentWeek() + 1;
-  const matchups = getMatchupsForWeek(newWeek);
+  week: number,
+): Promise<NotifyWeekResult> {
+  const matchups = getMatchupsForWeek(week);
 
   if (matchups.length === 0) {
     throw new Error(
-      `No matchups set for Week ${newWeek}. Use \`/schedule add\` first.`,
+      `No matchups set for Week ${week}. Use \`/schedule add\` first.`,
     );
   }
 
@@ -49,10 +49,10 @@ export async function advanceWeekAndNotify(
   for (const team of getTeamsWithDiscordUsers()) {
     if (!team.discordUserId) continue;
 
-    const matchup = getTeamMatchupForWeek(team.id, newWeek);
+    const matchup = getTeamMatchupForWeek(team.id, week);
     const message = matchup
-      ? buildMatchupDm(newWeek, team, matchup, startMs)
-      : `**Week ${newWeek} — Bye week**\n**${team.name}** has no game scheduled this week.`;
+      ? buildMatchupDm(week, team, matchup, startMs)
+      : `**Week ${week} — Bye week**\n**${team.name}** has no game scheduled this week.`;
 
     if (!matchup) byeCount++;
 
@@ -72,7 +72,7 @@ export async function advanceWeekAndNotify(
     );
   }
 
-  const embed = buildWeekScheduleEmbed(newWeek, matchups, {
+  const embed = buildWeekScheduleEmbed(week, matchups, {
     deadline: scheduleDeadline,
   });
   const failedMentions = dmFailures.map((id) => `<@${id}>`).join(" ");
@@ -82,15 +82,29 @@ export async function advanceWeekAndNotify(
 
   await channel.send({ content, embeds: [embed] });
 
-  setCurrentWeek(newWeek);
+  setCurrentWeek(week);
   setNextAdvanceAt(scheduleDeadline);
-  purgeAvailabilityBeforeWeek(newWeek);
+  purgeAvailabilityBeforeWeek(week);
 
   return {
-    newWeek,
+    week,
     matchupCount: matchups.length,
     notifiedCount,
     byeCount,
     dmFailures,
   };
+}
+
+export async function advanceWeekAndNotify(
+  client: Client,
+  scheduleChannelId: string,
+): Promise<NotifyWeekResult> {
+  return notifyWeekAndUpdate(client, scheduleChannelId, getCurrentWeek() + 1);
+}
+
+export async function startSeasonAndNotify(
+  client: Client,
+  scheduleChannelId: string,
+): Promise<NotifyWeekResult> {
+  return notifyWeekAndUpdate(client, scheduleChannelId, 0);
 }

@@ -5,7 +5,10 @@ import {
   getNextAdvanceAt,
   setCurrentWeek,
 } from "../services/database.js";
-import { advanceWeekAndNotify } from "../services/week-notify.js";
+import {
+  advanceWeekAndNotify,
+  startSeasonAndNotify,
+} from "../services/week-notify.js";
 import type { Command } from "../types.js";
 import { requireAdmin } from "../utils/admin.js";
 import { formatNextAdvance } from "../utils/deadlines.js";
@@ -27,6 +30,13 @@ export const weekCommand: Command = {
         .setName("advance")
         .setDescription(
           "Advance to the next week and notify players of their matchups",
+        ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("start-season")
+        .setDescription(
+          "Kick off Week 0 — notify players and post the schedule without advancing",
         ),
     )
     .addSubcommand((sub) =>
@@ -96,13 +106,15 @@ export const weekCommand: Command = {
 
     try {
       const scheduleChannelId = requireEnv("SCHEDULE_CHANNEL_ID");
-      const result = await advanceWeekAndNotify(
-        interaction.client,
-        scheduleChannelId,
-      );
+      const result =
+        subcommand === "start-season"
+          ? await startSeasonAndNotify(interaction.client, scheduleChannelId)
+          : await advanceWeekAndNotify(interaction.client, scheduleChannelId);
 
       const lines = [
-        `Advanced to **Week ${result.newWeek}**.`,
+        subcommand === "start-season"
+          ? `Season started at **Week ${result.week}**.`
+          : `Advanced to **Week ${result.week}**.`,
         `Posted ${result.matchupCount} matchup(s) to <#${scheduleChannelId}>.`,
         `Notified ${result.notifiedCount} player(s).`,
       ];
@@ -120,7 +132,11 @@ export const weekCommand: Command = {
       await interaction.editReply({ content: lines.join("\n") });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to advance the week.";
+        error instanceof Error
+          ? error.message
+          : subcommand === "start-season"
+            ? "Failed to start the season."
+            : "Failed to advance the week.";
       await interaction.editReply({ content: message });
     }
   },
