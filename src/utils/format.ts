@@ -41,7 +41,7 @@ export function buildTeamListEmbed(teams: Team[]): EmbedBuilder {
     .setColor(0x57f287);
 
   if (teams.length === 0) {
-    embed.setDescription("No teams registered yet.");
+    embed.setDescription("No teams assigned yet.");
     return embed;
   }
 
