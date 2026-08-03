@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import {
   assignTeamToUser,
-  getAllTeams,
+  getTeamsWithDiscordUsers,
   unassignTeamByName,
   unassignTeamByUserId,
 } from "../services/database.js";
@@ -33,7 +33,7 @@ export const teamCommand: Command = {
     .addSubcommand((sub) =>
       sub
         .setName("list")
-        .setDescription("Show all team and user mappings"),
+        .setDescription("Show assigned team and user mappings"),
     )
     .addSubcommand((sub) =>
       sub
@@ -97,7 +97,7 @@ export const teamCommand: Command = {
       return;
     }
 
-    const teams = getAllTeams();
+    const teams = getTeamsWithDiscordUsers();
     await interaction.reply({
       embeds: [buildTeamListEmbed(teams)],
     });
