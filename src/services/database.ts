@@ -57,7 +57,9 @@ export function initDatabase(): void {
   }
 
   db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
+  // DELETE is more reliable than WAL on networked volumes (e.g. Railway).
+  db.pragma("journal_mode = DELETE");
+  db.pragma("busy_timeout = 5000");
   db.pragma("foreign_keys = ON");
 
   db.exec(`
@@ -342,6 +344,36 @@ export function setNextAdvanceAt(deadline: Date): void {
 
 export function clearNextAdvanceAt(): void {
   db.prepare("DELETE FROM settings WHERE key = 'next_advance_at'").run();
+}
+
+export interface ClearSeasonResult {
+  matchupsRemoved: number;
+  availabilityRemoved: number;
+  proposalsRemoved: number;
+  week: number;
+}
+
+/** Clears all matchups and scheduling data, then resets to Week 0. Keeps teams and timezones. */
+export function clearSeasonSchedule(): ClearSeasonResult {
+  const clear = db.transaction(() => {
+    const matchupsRemoved = db.prepare("DELETE FROM matchups").run().changes;
+    const availabilityRemoved = db
+      .prepare("DELETE FROM availability_slots")
+      .run().changes;
+    const proposalsRemoved = db
+      .prepare("DELETE FROM game_time_proposals")
+      .run().changes;
+    clearNextAdvanceAt();
+    const week = setCurrentWeek(0);
+    return {
+      matchupsRemoved,
+      availabilityRemoved,
+      proposalsRemoved,
+      week,
+    };
+  });
+
+  return clear();
 }
 
 export function incrementCurrentWeek(): number {
