@@ -92,6 +92,7 @@ Data is stored in `data/dynasty.db` (created automatically).
 | `/team assign` | Link a Discord user to a team |
 | `/team unassign` | Remove a user from a team |
 | `/schedule add` | Add a matchup for a week |
+| `/schedule clear-season` | Delete all matchups and reset to Week 0 (requires `confirm`) |
 | `/week start-season` | Kick off Week 0 — notify players and post schedule without advancing |
 | `/week advance` | Advance to the next week, DM players, and post to the schedule channel |
 | `/week set` | Manually set the current week (supports Week 0) |
@@ -104,6 +105,14 @@ Data is stored in `data/dynasty.db` (created automatically).
 4. Players set timezones and coordinate with `/availability ...`
 5. After Week 0: `/week advance` → Week 1, and so on
 6. Check progress anytime with `/week current`, `/week next`, or `/schedule week`
+
+### Starting a new season
+
+1. Clear Season 1 games: `/schedule clear-season confirm:confirm`
+2. Add Season 2 matchups with `/schedule add`
+3. Kick off: `/week start-season`
+
+Team assignments and player timezones are kept. Matchups, availability windows, proposals, and the advance deadline are cleared; week resets to 0.
 
 ## Deadlines
 

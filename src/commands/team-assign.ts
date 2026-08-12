@@ -55,13 +55,14 @@ export const teamCommand: Command = {
     if (subcommand === "assign") {
       if (!(await requireAdmin(interaction))) return;
 
+      await interaction.deferReply({ ephemeral: true });
+
       const user = interaction.options.getUser("user", true);
       const name = interaction.options.getString("name", true);
       const team = assignTeamToUser(name, user.id);
 
-      await interaction.reply({
+      await interaction.editReply({
         content: `Assigned **${team.name}** to ${user}.`,
-        ephemeral: true,
       });
       return;
     }
@@ -80,19 +81,25 @@ export const teamCommand: Command = {
         return;
       }
 
+      await interaction.deferReply({ ephemeral: true });
+      console.log(
+        `[team unassign] by=${interaction.user.id} user=${user?.id ?? "none"} name=${name ?? "none"}`,
+      );
+
       try {
         const team = user
           ? unassignTeamByUserId(user.id)
           : unassignTeamByName(name!);
 
-        await interaction.reply({
+        console.log(`[team unassign] success team=${team.name}`);
+        await interaction.editReply({
           content: `Removed the assignment for **${team.name}**.`,
-          ephemeral: true,
         });
       } catch (error) {
+        console.error("[team unassign] failed:", error);
         const message =
           error instanceof Error ? error.message : "Failed to unassign team.";
-        await interaction.reply({ content: message, ephemeral: true });
+        await interaction.editReply({ content: message });
       }
       return;
     }
